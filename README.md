@@ -1,10 +1,8 @@
 # Seeds: Random effect logistic regression
 ## BAYES - Adavanced Bayesian Inference
 
+Sujet: https://www.mrc-bsu.cam.ac.uk/wp-content/uploads/WinBUGS_Vol1.pdf
 Link rapport: https://es.overleaf.com/9339925286zcqgghwsthws
-
-Pour lire .r documents sur Anaconda - JupyterNotebook use `pyreadr` - install : `conda install -c conda-forge pyreadr`  
-Pour lire .stan documents sur Anaconda - JupyterNotebook use `pystan` - install : `conda install -c conda-forge pystan`. 
 
 Étudiant:
   - Maria ALONSO 
