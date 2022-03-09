@@ -3,7 +3,7 @@
 
 Link rapport: https://es.overleaf.com/9339925286zcqgghwsthws
 
-Pour lire .r documents sur Anaconda - JupyterNotebook : `conda install -c conda-forge pyreadr
+Pour lire .r documents sur Anaconda - JupyterNotebook : `conda install -c conda-forge pyreadr`
 
 Étudiant:
   - Maria ALONSO 
