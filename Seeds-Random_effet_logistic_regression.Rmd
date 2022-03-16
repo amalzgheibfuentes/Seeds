@@ -2,6 +2,11 @@
 title: "Seeds: Random effect logistic regression"
 ---
 
+```{r}
+require(invgamma)
+```
+
+
 # Préparation des données
 
 ```{r}
@@ -30,14 +35,14 @@ init <- list(alpha0, alpha1, alpha2, alpha12, tau, b)
 ```
 
 ```{r}
-prop <- c(10^3, 10^3, 10^3, 10^3, 10^(-3), 10^(-3))
+par <- c(10^3, 10^3, 10^3, 10^3, 10^(-3), 10^(-3))
 ```
 
 
 # Model
 
 ```{r}
-gibbsSeeds <- function(nchain, df, init, prop) {
+gibbsSeeds <- function(nchain, df, init, par, prop_sd) {
   
   # Data
   N   <- nrow(df)
@@ -60,7 +65,7 @@ gibbsSeeds <- function(nchain, df, init, prop) {
   
   # Param for all plates
   chain     <- matrix(NA, nchain + 1, 5)
-  chain[1,] <- c(alpha0, alpha1, alpha2, alpha12, tau)
+  chain[1,] <- c(alpha0, alpha1, alpha2, alpha12, sigma)
   # Param for each plate
   chain_b   <- matrix(NA, nchain + 1, length(b))
   chain[1,] <- b
@@ -69,26 +74,113 @@ gibbsSeeds <- function(nchain, df, init, prop) {
     
     # Mise a jour de alpha0
     
+    ## propsicion de alpha0 y calculo de p ligado 
+    prop <- rnorm(1, alpha0, prop_sd[1])       
+    prop_p <- inv.logit(prop + alpha1*x1 + alpha2*x2 + alpha12*x1*x2 + b) 
     
+    ## ley condicional evaluada en los valores propuestos
+    top <- - prop^2 / (2*par()[1]^2) + sum(r*log(prop_p)) + sum((n-r)*log(1-prop_p))
     
-    prop <- rnorm(1, beta0, prop_sd[1])
-    prop_psi <- exp(prop + beta1 * temp)
-    
-    top <- sum(cens * dweibull(time, gamma, prop_psi, log = TRUE) +
-      (1 - cens) * pweibull(time, gamma, prop_psi, log = TRUE, lower.tail = FALSE)) +
-      dnorm(prop, 0, 10, log = TRUE)
-    bottom <- sum(cens * dweibull(time, gamma, psi, log = TRUE) +
-      (1 - cens) * pweibull(time, gamma, psi, log = TRUE, lower.tail = FALSE)) +
-      dnorm(beta0, 0, 10, log = TRUE)
+    ## ley condicional evaluada en los valores iniciales
+    bottom <- alpha0^2 / (2*par[1]^2) + sum(r*log(p)) + sum((n-r)*log(1-p))
     
     acc_prob <- exp(top - bottom)
     
     if (runif(1) < acc_prob){
-      beta0 <- prop
-      psi <- prop_psi
+      alpha0 <- prop
     }
-  
-  
+    
+    # Mise a jour de alpha1
+    
+    ## propsicion de alpha1 y calculo de p ligado 
+    prop <- rnorm(1, alpha1, prop_sd[2])       
+    prop_p <- inv.logit(alpha0 + prop*x1 + alpha2*x2 + alpha12*x1*x2 + b) 
+    
+    ## ley condicional evaluada en los valores propuestos
+    top <- - prop^2 / (2*par[2]^2) + sum(r*log(prop_p)) + sum((n-r)*log(1-prop_p))
+    
+    ## ley condicional evaluada en los valores iniciales
+    bottom <- alpha1^2 / (2*par[2]^2) + sum(r*log(p)) + sum((n-r)*log(1-p))
+    
+    acc_prob <- exp(top - bottom)
+    
+    if (runif(1) < acc_prob){
+      alpha1 <- prop
+    }
+    
+    # Mise a jour de alpha2
+    
+    ## propsicion de alpha2 y calculo de p ligado 
+    prop <- rnorm(1, alpha2, prop_sd[3])       
+    prop_p <- inv.logit(alpha0 + alpha1*x1 + prop*x2 + alpha12*x1*x2 + b) 
+    
+    ## ley condicional evaluada en los valores propuestos
+    top <- - prop^2 / (2*par[3]^2) + sum(r*log(prop_p)) + sum((n-r)*log(1-prop_p))
+    
+    ## ley condicional evaluada en los valores iniciales
+    bottom <- alpha2^2 / (2*par[3]^2) + sum(r*log(p)) + sum((n-r)*log(1-p))
+    
+    acc_prob <- exp(top - bottom)
+    
+    if (runif(1) < acc_prob){
+      alpha2 <- prop
+    }
+    
+    # Mise a jour de alpha12
+    
+    ## propsicion de alpha12 y calculo de p ligado 
+    prop <- rnorm(1, alpha12, prop_sd[4])       
+    prop_p <- inv.logit(alpha0 + alpha1*x1 + alpha2*x2 + prop*x1*x2 + b) 
+    
+    ## ley condicional evaluada en los valores propuestos
+    top <- - prop^2 / (2*par[4]^2) + sum(r*log(prop_p)) + sum((n-r)*log(1-prop_p))
+    
+    ## ley condicional evaluada en los valores iniciales
+    bottom <- alpha12^2 / (2*par[4]^2) + sum(r*log(p)) + sum((n-r)*log(1-p))
+    
+    acc_prob <- exp(top - bottom)
+    
+    if (runif(1) < acc_prob){
+      alpha12 <- prop
+    }
+    
+    # Mise a jour de sigma carre
+    
+    ## propsicion de sigma carre 
+    prop <- rnorm(1, sigma^2, prop_sd[5]) 
+    
+    ## ley condicional evaluada en los valores propuestos
+    top <- dinvgamma(prop, shape = par[5] + N/2 , rate = par[6] + 1/2 * sum(b), log = TRUE)
+    
+    ## ley condicional evaluada en los valores iniciales
+    bottom <- dinvgamma(sigma^2, shape = par[5] + N/2 , rate = par[6] + 1/2 * sum(b), log = TRUE)
+    
+    acc_prob <- exp(top - bottom)
+    
+    if (runif(1) < acc_prob){
+      sigma <- sqrt(prop)
+    }
+    
+    # Mise a jour de b
+    
+    for 
+    ## propsicion de b 
+    prop <- rnorm(1, b, prop_sd[6]) 
+    prop_b <- rnorm()
+    
+    ## ley condicional evaluada en los valores propuestos
+    top <- dinvgamma(prop, shape = par[5] + N/2 , rate = par[6] + 1/2 * sum(prop_b), log = TRUE)
+    
+    ## ley condicional evaluada en los valores iniciales
+    bottom <- dinvgamma(sigma^2, shape = par[5] + N/2 , rate = par[6] + 1/2 * sum(b), log = TRUE)
+    
+    acc_prob <- exp(top - bottom)
+    
+    if (runif(1) < acc_prob){
+      sigma <- sqrt(prop)
+    }
+    
+    
   
   
 }
