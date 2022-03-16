@@ -6,19 +6,36 @@ output: html_document
 ---
 Importation des données:
 ```{r}
-"I" <- 
-21
-"r" <-
-c(10, 23, 23, 26, 17, 5, 53, 55, 32, 46, 10, 8, 10, 8, 23, 0, 
-3, 22, 15, 32, 3)
-"N" <-
-c(39, 62, 81, 51, 39, 6, 74, 72, 51, 79, 13, 16, 30, 28, 45, 
-4, 12, 41, 30, 51, 7)
-"x1" <-
-c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
-1)
-"x2" <-
-c(0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 
-1)
+"I" <- 21
+"r" <- c(10, 23, 23, 26, 17, 5, 53, 55, 32, 46, 10, 8, 10, 8, 23, 0, 3, 22, 15, 32, 3)
+"n" <- c(39, 62, 81, 51, 39, 6, 74, 72, 51, 79, 13, 16, 30, 28, 45,  4, 12, 41, 30, 51, 7)
+"x1" <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+"x2" <- c(0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1)
+```
+
+Chargement des données:
+```{r}
+init_alpha0 <- 0
+init_alpha1 <- 0
+init_alpha2 <- 0
+init_alpha12 <- 0
+init_sigma <- 1/10
+init_b <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+```
+
+Échantillonneur:
+```{r}
+seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, init_sigma, init_b, prop_sd){
+  
+  alpha0 <- init_alpha0
+  alpha1 <- init_alpha1
+  alpha2 <- init_alpha2
+  alpha12 <- init_alpha12
+  sigma <- init_sigma
+  b <- init_b
+  
+  
+  
+}
 ```
 
