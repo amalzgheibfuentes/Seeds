@@ -141,7 +141,7 @@ gibbs_Seeds <- function(nchain , n , r , N , X1, X2 , prop_sd = 1) {
     
             ## Mise a jour de sigma2
     
-    prop <- rnorm(1, sigma2, prop_sd)
+    prop <- 1 / rgamma(1, 10**(-3) + N / 2, 10**(-3) + 0.5 * sum(b^2))
     
     top <- (1.001+N/2)*log(prop) - (0.001 + 0.5 * sum(b**2))/prop
     
