@@ -1,0 +1,12 @@
+---
+title: "Seeds: Random effect logistic regression"
+---
+
+# Importation des données
+
+```{r}
+
+```
+
+
+
