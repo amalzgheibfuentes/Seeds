@@ -2,11 +2,98 @@
 title: "Seeds: Random effect logistic regression"
 ---
 
-# Importation des données
+# Préparation des données
 
 ```{r}
-
+"N"  <- 21
+"r"  <- c(10, 23, 23, 26, 17, 5, 53, 55, 32, 46, 10, 8, 10, 8, 23, 0, 3, 22, 15, 32, 3)
+"n"  <- c(39, 62, 81, 51, 39, 6, 74, 72, 51, 79, 13, 16, 30, 28, 45, 4, 12, 41, 30, 51, 7) 
+"x1" <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+"x2" <- c(0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1)
 ```
+
+```{r}
+df <- data.frame(r,n,r/n,x1,x2)
+```
+
+```{r}
+alpha0   <- 0
+alpha1   <- 0
+alpha2   <- 0
+alpha12  <- 0
+tau      <- 10
+b        <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+```
+
+```{r}
+init <- list(alpha0, alpha1, alpha2, alpha12, tau, b)
+```
+
+```{r}
+prop <- c(10^3, 10^3, 10^3, 10^3, 10^(-3), 10^(-3))
+```
+
+
+# Model
+
+```{r}
+gibbsSeeds <- function(nchain, df, init, prop) {
+  
+  # Data
+  N   <- nrow(df)
+  r   <- df$r
+  n   <- df$n
+  x1  <- df$x1
+  x2  <- df$x2
+  
+  # Init
+  alpha0  <- init[[1]]
+  alpha1  <- init[[2]]
+  alpha2  <- init[[3]]
+  alpha12 <- init[[4]]
+  tau     <- init[[5]]
+  b       <- init[[6]]
+  
+  sigma   <- 1 / sqrt(tau)
+  
+  p <- inv.logit(alpha0 + alpha1 * x1 + alpha2 * x2 + alpha12 * x1 * x2 + b) 
+  
+  # Param for all plates
+  chain     <- matrix(NA, nchain + 1, 5)
+  chain[1,] <- c(alpha0, alpha1, alpha2, alpha12, tau)
+  # Param for each plate
+  chain_b   <- matrix(NA, nchain + 1, length(b))
+  chain[1,] <- b
+  
+  for (i in 1:nchain){
+    
+    # Mise a jour de alpha0
+    
+    
+    
+    prop <- rnorm(1, beta0, prop_sd[1])
+    prop_psi <- exp(prop + beta1 * temp)
+    
+    top <- sum(cens * dweibull(time, gamma, prop_psi, log = TRUE) +
+      (1 - cens) * pweibull(time, gamma, prop_psi, log = TRUE, lower.tail = FALSE)) +
+      dnorm(prop, 0, 10, log = TRUE)
+    bottom <- sum(cens * dweibull(time, gamma, psi, log = TRUE) +
+      (1 - cens) * pweibull(time, gamma, psi, log = TRUE, lower.tail = FALSE)) +
+      dnorm(beta0, 0, 10, log = TRUE)
+    
+    acc_prob <- exp(top - bottom)
+    
+    if (runif(1) < acc_prob){
+      beta0 <- prop
+      psi <- prop_psi
+    }
+  
+  
+  
+  
+}
+```
+
 
 
 
