@@ -36,6 +36,7 @@ init <- list(alpha0, alpha1, alpha2, alpha12, tau, b)
 
 ```{r}
 par <- c(10^3, 10^3, 10^3, 10^3, 10^(-3), 10^(-3))
+prop_sd <- c(1, 1, 1, 1, 1, 1)
 ```
 
 
@@ -163,26 +164,28 @@ gibbsSeeds <- function(nchain, df, init, par, prop_sd) {
     
     # Mise a jour de b
     
-    for 
-    ## propsicion de b 
-    prop <- rnorm(1, b, prop_sd[6]) 
-    prop_b <- rnorm()
-    
-    ## ley condicional evaluada en los valores propuestos
-    top <- dinvgamma(prop, shape = par[5] + N/2 , rate = par[6] + 1/2 * sum(prop_b), log = TRUE)
-    
-    ## ley condicional evaluada en los valores iniciales
-    bottom <- dinvgamma(sigma^2, shape = par[5] + N/2 , rate = par[6] + 1/2 * sum(b), log = TRUE)
-    
-    acc_prob <- exp(top - bottom)
-    
-    if (runif(1) < acc_prob){
-      sigma <- sqrt(prop)
-    }
-    
-    
-  
-  
+    for (j in 1:length(b)) {
+      ## proposicion de b_i
+      prop <- rnorm(1, b[j], prop_sd[6])
+      prop_p <- inv.logit(alpha0 + alpha1*x1 + alpha2*x2 + alpha12*x1*x2 + prop) 
+      
+      ## ley condicional evaluada en los valores propuestos
+      top <- - prop[j]^2 / (2*sigma^2) + r[j]*log(prop_p[j]) + (n[j] - r[j]) * log(1-prop_p[j])
+      
+      ## ley condicional evaluada en los valores iniciales
+      bottom <- - b[j]^2 / (2*sigma^2) + r[j]*log(p[j]) + (n[j] - r[j]) * log(1-p[j])
+      
+      acc_prob <- exp(top - bottom)
+      
+      if (runif(1) < acc_prop){
+        b[i] <- prop
+      }
+      }
+      
+    ## Mettre a jour la chaine
+    chain[i+1,] <- c(alpha0, alpha1, alpha2, alpha12, sigma)
+    chain[i+1,] <- b
+  }
 }
 ```
 
