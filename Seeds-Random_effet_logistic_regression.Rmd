@@ -2,10 +2,158 @@
 title: "Seeds: Random effect logistic regression"
 ---
 
-# Importation des données
+# Importation des données et Inisalitation
 
 ```{r}
-load()
+alpha0 <- 0
+alpha1 <- 0
+alpha2 <- 0
+alpha12 <- 0
+tau <- 10
+b <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0)
+
+prop_sd = 1e3
+gamma_alpha = 0.001
+gamma_delta = 0.001
+
+#il faut changer le nombre de parametres pour que ça soit coherent avec l'ennoncé
+"N" <- 
+21
+"r" <-
+c(10, 23, 23, 26, 17, 5, 53, 55, 32, 46, 10, 8, 10, 8, 23, 0, 
+3, 22, 15, 32, 3)
+"n" <-
+c(39, 62, 81, 51, 39, 6, 74, 72, 51, 79, 13, 16, 30, 28, 45, 
+4, 12, 41, 30, 51, 7)
+"x1" <-
+c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+1)
+"x2" <-
+c(0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 
+1)
+
+#on le transforme a data frame pour mieux travailler
+data <- data.frame(r, n, r/n, x1, x2)
+init <- data.frame(alpha0, alpha1, alpha2, alpha12, tau)
+initb <- data.frame(b)
+```
+
+
+#Creation du modele
+
+```{r}
+gibbsMotors <- function(nchain, data, init, initb, prop_sd, gamma_alpha, gamma_delta){
+  ##Prendre les variables d'interet
+  r <- data$r
+  n <- data$n
+  rn <- data$r.n
+  x1 <- data$x1
+  x2 <- data$x2
+  
+  alpha0 <- init[1]
+  alpha1 <- init[2]
+  alpha2 <- init[3]
+  apha12 <- init[4]
+  tau <- init[5]
+  b <- initb
+  
+  sigma <- 1/sqrt(tau)
+  p <- inv.logit(alpha0 + alpha1*x1 + alpha2*x2 + alpha12*x1*x2 +b)
+  
+  #CREATION DE LA MATRIX
+  #On fait 2 iteration differents vu que b a une longueur different au reste
+  chain <- matrix(NA, nchain + 1, 3)
+  chain[1,] <- init
+  chainb <- matrix(NA, nchain + 1, 3)
+  chainb[1,] <- initb
+  
+  for (i in 1:nchain){
+    ## Mise a jour de alpha0
+    
+    prop <- rnorm(1, alpha0, prop_sd[1])
+    prop_p <- inv.logit(prop + alpha1*x1 + alpha2*x2 + alpha12*x1*x2 +b)
+    
+    top <- prop^2 / (2*(prop_sd^2)) + sum(r*log(prop_p)) + sum((n-r)*log(1-prop_p))
+    
+    bottom <- alpha0^2 / (2*(prop_sd^2)) + sum(r*log(p)) + sum((n-r)*log(1-p))
+    
+    acc_prob <- exp(top - bottom)
+    
+    if (runif(1) < acc_prob){
+      alpha0 <- prop
+      p <- prop_p
+    }
+    
+    
+    ## Mise a jour de alpha1
+    prop <- rnorm(1, alpha1, prop_sd[1])
+    prop_p <- inv.logit(alpha0 + prop*x1 + alpha2*x2 + alpha12*x1*x2 +b)
+    
+    top <- prop^2 / (2*(prop_sd^2)) + sum(r*log(prop_p)) + sum((n-r)*log(1-prop_p))
+    
+    bottom <- alpha1^2 / (2*(prop_sd^2)) + sum(r*log(p)) + sum((n-r)*log(1-p))
+    
+    acc_prob <- exp(top - bottom)
+    
+    if (runif(1) < acc_prob){
+      alpha1 <- prop
+      p <- prop_p
+    }
+    
+    ## Mise a jour de alpha2
+    prop <- rnorm(1, alpha2, prop_sd[1])
+    prop_p <- inv.logit(alpha0 + alpha1*x1 + prop*x2 + alpha12*x1*x2 +b)
+    
+    top <- prop^2 / (2*(prop_sd^2)) + sum(r*log(prop_p)) + sum((n-r)*log(1-prop_p))
+    
+    bottom <- alpha2^2 / (2*(prop_sd^2)) + sum(r*log(p)) + sum((n-r)*log(1-p))
+    
+    acc_prob <- exp(top - bottom)
+    
+    if (runif(1) < acc_prob){
+      alpha2 <- prop
+    }
+      
+    ## Mise a jour de alpha12
+    prop <- rnorm(1, alpha12, prop_sd[1])
+    prop_p <- inv.logit(alpha0 + alpha1*x1 + alpha2*x2 + prop*x1*x2 +b)
+    
+    top <- prop^2 / (2*(prop_sd^2)) + sum(r*log(prop_p)) + sum((n-r)*log(1-prop_p))
+    
+    bottom <- alpha2^2 / (2*(prop_sd^2)) + sum(r*log(p)) + sum((n-r)*log(1-p))
+    
+    acc_prob <- exp(top - bottom)
+    
+    if (runif(1) < acc_prob){
+      alpha12 <- prop
+    }
+      
+    ## Mise a jour de sigma
+    library(invgamma)  
+    prop <- rnorm(1, sigma^2, prop_sd[1])
+    prop_p <- rinvgamma(10000, gamma_alpha, gamma_delta)
+    
+    top <- prop^2 / (2*(prop_sd^2)) + sum(r*log(prop_p)) + sum((n-r)*log(1-prop_p))
+    
+    bottom <- alpha2^2 / (2*(prop_sd^2)) + sum(r*log(p)) + sum((n-r)*log(1-p))
+    
+    acc_prob <- exp(top - bottom)
+    
+    if (runif(1) < acc_prob){
+      alpha12 <- prop
+    }
+    
+    ## Mettre a jour ma chaine
+    chain[i+1,] <- c(alpha0, alpha1, alpha12, sigma)
+  }
+  
+  ## On a centre les covariables donc on décentre
+  chain[,1] <- 
+  return(chain)
+  
+}
 ```
 
 
