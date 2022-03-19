@@ -74,9 +74,9 @@ gibbs_Seeds <- function(nchain , n , r , N , X1, X2 , prop_sd = 1) {
     
     prop_p <- inv.logit(prop + alpha1 * x1 + alpha2 * x2 + alpha12 * x1 * x2 + b)
     
-    top <- prop * sum(r) + sum(n*log(1-prop_p)) - (prop**2/2*1000000)
+    top <- prop * sum(r) + sum(n*log(1-prop_p)) - ((prop^2) / (2 * 1e6))
     
-    bottom <- alpha0 * sum(r) + sum(n*log(1-p)) - (alpha0**2/2*1000000)
+    bottom <- alpha0 * sum(r) + sum(n*log(1-p)) - ((alpha0^2) / (2 * 1e6))
     
     acc_prop = exp(top-bottom)
     
@@ -91,9 +91,9 @@ gibbs_Seeds <- function(nchain , n , r , N , X1, X2 , prop_sd = 1) {
     
     prop_p <- inv.logit(alpha0 + prop * x1 + alpha2 * x2 + alpha12 * x1 * x2 + b)
     
-    top <- prop * sum(r*x1) + sum(n*log(1-prop_p)) - (prop**2/2*1000000)
+    top <- prop * sum(r*x1) + sum(n*log(1-prop_p)) - ((prop^2) / (2 * 1e6))
     
-    bottom <- alpha1 * sum(r*x1) + sum(n*log(1-p)) - (alpha1**2/2*1000000)
+    bottom <- alpha1 * sum(r*x1) + sum(n*log(1-p)) - ((alpha1^2) / (2 * 1e6))
     
     acc_prop = exp(top-bottom)
     
@@ -109,9 +109,9 @@ gibbs_Seeds <- function(nchain , n , r , N , X1, X2 , prop_sd = 1) {
     
     prop_p <- inv.logit(alpha0 + alpha1 * x1 + prop * x2 + alpha12 * x1 * x2 + b)
     
-    top <- prop * sum(r*x2) + sum(n*log(1-prop_p)) - (prop**2/2*1000000)
+    top <- prop * sum(r*x2) + sum(n*log(1-prop_p)) - ((prop^2) / (2 * 1e6))
     
-    bottom <- alpha2 * sum(r*x2) + sum(n*log(1-p)) - (alpha2**2/2*1000000)
+    bottom <- alpha2 * sum(r*x2) + sum(n*log(1-p)) - ((alpha2^2) / (2 * 1e6))
     
     acc_prop = exp(top-bottom)
      
@@ -127,9 +127,9 @@ gibbs_Seeds <- function(nchain , n , r , N , X1, X2 , prop_sd = 1) {
     
     prop_p <- inv.logit(alpha0 + alpha1 * x1 + alpha2 * x2 + prop * x1 * x2 + b)
     
-    top <- prop * sum((r*x1)*x2) + sum(n*log(1-prop_p)) - (prop**2/2*1000000)
+    top <- prop * sum((r*x1)*x2) + sum(n*log(1-prop_p)) - ((prop^2) / (2 * 1e6))
     
-    bottom <- alpha12 * sum((r*x1)*x2) + sum(n*log(1-p)) - (alpha12**2/2*1000000)
+    bottom <- alpha12 * sum((r*x1)*x2) + sum(n*log(1-p)) - ((alpha12^2) / (2 * 1e6))
     
     acc_prop = exp(top-bottom)
      
@@ -139,59 +139,45 @@ gibbs_Seeds <- function(nchain , n , r , N , X1, X2 , prop_sd = 1) {
       p <- prop_p
     }
     
-            ## Mise a jour de sigma2
-    
-    prop <- 1 / rgamma(1, 10**(-3) + N / 2, 10**(-3) + 0.5 * sum(b^2))
-    
-    top <- (1.001+N/2)*log(prop) - (0.001 + 0.5 * sum(b**2))/prop
-    
-    bottom <- (1.001+N/2)*log(sigma2) - (0.001 + 0.5 * sum(b**2))/sigma2
-    
-    acc_prop = exp(top-bottom)
-    
-    if (runif(1) < acc_prop){
-      sigma2 <- prop
-      p <- prop_p
+            ## Mise a jour de b
+
+    for (j in 1:N)
+    {
+      prop <- rnorm(1, b[j], prop_sd)
+      prop_p_j <- inv.logit(alpha0 + alpha1 * x1[j] + alpha2 * x2[j] + alpha12 * x1[j] * x2[j] + prop)
+      
+      top <- - (prop^2 / (2 * sigma2)) + r[j] * log(prop_p_j) + (n[j] - r[j]) * log(1 - prop_p_j)
+      bottom <- - (b[j]^2 / (2 * sigma2)) + r[j] * log(p[j]) + (n[j] - r[j]) * log(1 - p[j])
+      
+      acc_prob <- exp(top - bottom)
+      if (!is.finite(acc_prob))
+      browser()
+      
+      if (runif(1) < acc_prob){
+        b[j] <- prop
+        p[j] <- prop_p_j
+      }
     }
     
-            ## Mise a jour de b
-    
-
-    for (j in 1:N) {
-      ## Mise a jour de bi
-      prop <- rnorm(1, b[j], prop_sd)
-    
-      prop_p <- inv.logit(alpha0 + alpha1 * x1[j] + alpha2 * x2[j] + alpha12 * x1[j] * x2[j] + prop)
-    
-      top <- -(0.5 * prop^2) / sigma2 + (r[j]* prop) + (n[j] * log(1-prop_p))
-    
-      bottom <- -(0.5 * b[j]^2) / sigma2 + (r[j]* b[j]) + (n[j] * log(1-p))
-    
-      acc_prop = exp(top-bottom)
-       
-      
-      if (runif(1) < acc_prop){
-        b[j] <- prop
-        p[j] <- prop_p
-      }
-      }
+        # Mise à jour de sigma2
+    sigma2 <- 1 / rgamma(1, 10**(-3) + N / 2, 10**(-3) + 0.5 * sum(b^2))
     
     ## Mettre a jour ma chaine
     chain[i+1,] <- c(alpha0 , alpha1 , alpha2 , alpha12 , sigma2)
     b_chain[i+1,] <- b
   }
-  return(chain,b_chain)
+  return(chain)
   }
   
 ```
 
 ```{r}
-x <- gibbs_Seeds(10000 , n , r , N , X1, X2 , prop_sd = 1)
+x <- gibbs_Seeds(10000 , n , r , N , x1, x2 , prop_sd = 0.1)
 summary(x)
 ```
+
 ```{r}
-burnin <- 1:5000 
-plot(mcmc(x[-burnin,]))
+plot(coda::mcmc(x))
 ```
 
 
