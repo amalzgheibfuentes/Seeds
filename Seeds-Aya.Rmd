@@ -158,7 +158,4 @@ chain <- seeds(1e4, init_alpha0, init_alpha1, init_alpha2, init_alpha12, init_si
 chain
 ```
 
-```{r}
-plot(mcmc(chain[,2]))
-```
 
