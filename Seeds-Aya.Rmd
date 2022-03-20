@@ -25,6 +25,7 @@ init_b <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 ```{r}
 library(boot)
+library(coda)
 ```
 
 Échantillonneur:
@@ -39,7 +40,7 @@ seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, i
   sigma <- init_sigma
   b <- init_b
   
-  p <- inv.logit(alpha0 + alpha1 * x1 + alpha2 * x2 + alpha12 * x1 * x2 + b)
+  p <- plogis(alpha0 + alpha1 * x1 + alpha2 * x2 + alpha12 * x1 * x2 + b)
   
   chain <- matrix(NA, nchain + 1, 5)
   chain_b <- matrix(NA, nchain + 1, N)
@@ -55,15 +56,12 @@ seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, i
   {
     # Mise à jour de alpha0
     prop <- rnorm(1, alpha0, prop_sd[1])
-    prop_p <- inv.logit(prop + alpha1 * x1 + alpha2 * x2 + alpha12 * x1 * x2 + b)
+    prop_p <- plogis(prop + alpha1 * x1 + alpha2 * x2 + alpha12 * x1 * x2 + b)
     
     top <- - ((prop^2) / (2 * 1e6)) + sum(r * log(prop_p)) + sum((n-r) * log(1 - prop_p))
     bottom <- - ((alpha0^2) / (2 * 1e6)) + sum(r * log(p)) + sum((n-r) * log(1 - p))
     
     acc_prob <- exp(top - bottom)
-    
-    if (!is.finite(acc_prob))
-      browser()
     
     if (runif(1) < acc_prob){
       alpha0 <- prop
@@ -72,14 +70,12 @@ seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, i
     
     # Mise à jour de alpha1
     prop <- rnorm(1, alpha1, prop_sd[2])
-    prop_p <- inv.logit(alpha0 + prop * x1 + alpha2 * x2 + alpha12 * x1 * x2 + b)
+    prop_p <- plogis(alpha0 + prop * x1 + alpha2 * x2 + alpha12 * x1 * x2 + b)
     
     top <- - ((prop^2) / (2 * 1e6)) + sum(r * log(prop_p)) + sum((n-r) * log(1 - prop_p))
     bottom <- - ((alpha1^2) / (2 * 1e6)) + sum(r * log(p)) + sum((n-r) * log(1 - p))
     
     acc_prob <- exp(top - bottom)
-    if (!is.finite(acc_prob))
-      browser()
     
     if (runif(1) < acc_prob){
       alpha1 <- prop
@@ -88,14 +84,12 @@ seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, i
     
     # Mise à jour de alpha2
     prop <- rnorm(1, alpha2, prop_sd[3])
-    prop_p <- inv.logit(alpha0 + alpha1 * x1 + prop * x2 + alpha12 * x1 * x2 + b)
+    prop_p <- plogis(alpha0 + alpha1 * x1 + prop * x2 + alpha12 * x1 * x2 + b)
     
     top <- - ((prop^2) / (2 * 1e6)) + sum(r * log(prop_p)) + sum((n-r) * log(1 - prop_p))
     bottom <- - ((alpha2^2) / (2 * 1e6)) + sum(r * log(p)) + sum((n-r) * log(1 - p))
     
     acc_prob <- exp(top - bottom)
-    if (!is.finite(acc_prob))
-      browser()
     
     if (runif(1) < acc_prob){
       alpha2 <- prop
@@ -104,38 +98,31 @@ seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, i
     
     # Mise à jour de alpha12
     prop <- rnorm(1, alpha12, prop_sd[4])
-    prop_p <- inv.logit(alpha0 + alpha1 * x1 + alpha2 * x2 + prop * x1 * x2 + b)
+    prop_p <- plogis(alpha0 + alpha1 * x1 + alpha2 * x2 + prop * x1 * x2 + b)
     
     top <- - ((prop^2) / (2 * 1e6)) + sum(r * log(prop_p)) + sum((n-r) * log(1 - prop_p))
     bottom <- - ((alpha12^2) / (2 * 1e6)) + sum(r * log(p)) + sum((n-r) * log(1 - p))
     
     acc_prob <- exp(top - bottom)
-    if (!is.finite(acc_prob))
-      browser()
-    
+
     if (runif(1) < acc_prob){
       alpha12 <- prop
       p <- prop_p
     }
     
     # Mise à jour de sigma
-    sigma <- 1 / rgamma(1, 10^-3 + N / 2, 10^-3 + 0.5 * sum(b^2)) #change parameters
-    
-    # Mise à jour de la chaine
-    chain[i+1,] <- c(alpha0, alpha1, alpha2, alpha12, sigma)
+    sigma <- 1 / rgamma(1, shape = 10^(-3) + N / 2, scale = 10^(-3) + 0.5 * sum(b^2)) #change parameters
     
     # Mise à jour de b
     for (j in 1:N)
     {
-      prop <- rnorm(1, b[j], prop_sd[6])
-      prop_p_j <- inv.logit(alpha0 + alpha1 * x1[j] + alpha2 * x2[j] + alpha12 * x1[j] * x2[j] + prop)
+      prop <- rnorm(1, b[j], prop_sd[5])
+      prop_p_j <- plogis(alpha0 + alpha1 * x1[j] + alpha2 * x2[j] + alpha12 * x1[j] * x2[j] + prop)
       
       top <- - (prop^2 / (2 * sigma)) + r[j] * log(prop_p_j) + (n[j] - r[j]) * log(1 - prop_p_j)
       bottom <- - (b[j]^2 / (2 * sigma)) + r[j] * log(p[j]) + (n[j] - r[j]) * log(1 - p[j])
       
       acc_prob <- exp(top - bottom)
-      if (!is.finite(acc_prob))
-      browser()
       
       if (runif(1) < acc_prob){
         b[j] <- prop
@@ -143,19 +130,24 @@ seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, i
       }
     }
     #Mise à jour de la chaine
+    chain[i+1,] <- c(alpha0, alpha1, alpha2, alpha12, sigma)
     chain_b[i+1,] <- b
   }
-  return(chain)
+  my_list <- list("chain" = chain, "b_chain" = chain_b)
+  return(my_list)
 }
 ```
 
 
 ```{r}
-chain <- seeds(1e4, init_alpha0, init_alpha1, init_alpha2, init_alpha12, init_sigma, init_b, rep(0.2,6), x1, x2, N)
+l <- seeds(1e4, init_alpha0, init_alpha1, init_alpha2, init_alpha12, init_sigma, init_b, prop_sd = rep(0.2,5), x1, x2, N)
 ```
 
 ```{r}
-chain
+l[1]
 ```
 
+```{r}
+plot(mcmc(l$chain[,5][-2]))
+```
 
