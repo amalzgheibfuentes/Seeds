@@ -173,6 +173,15 @@ moy_sigma <- mean(sqrt(l$chain[,5]))
 ```
 
 ```{r}
+moy_alpha0 
+moy_alpha1 
+moy_alpha2 
+moy_alpha12 
+moy_sigma
+```
+
+
+```{r}
 sd_alpha0 <- sd(l$chain[,1])
 sd_alpha1 <- sd(l$chain[,2])
 sd_alpha2 <- sd(l$chain[,3])
@@ -181,7 +190,24 @@ sd_sigma <- sd(sqrt(l$chain[,5]))
 ```
 
 ```{r}
+sd_alpha0 
+sd_alpha1 
+sd_alpha2 
+sd_alpha12 
+sd_sigma 
+```
+
+```{r}
 summary(l$chain)
+```
+```{r}
+text=c("alpha0", "alpha1", "alpha2", "alpha12", "sigma")
+par(mfrow = c(4, 2), mar = c(4, 5, 0.5, 0.5))
+for (j in 1:5){
+  plot(l$chain[-c(burnin, 2890),][,j], type = "l", main = "",ylab=text[j])
+  plot(density(l$chain[-c(burnin, 2890),][,j]), type = "l", main = "")
+}
+    
 ```
 
 
