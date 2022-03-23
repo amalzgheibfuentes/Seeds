@@ -4,7 +4,7 @@ author: "Aya AMENSSAG"
 date: "3/16/2022"
 output: html_document
 ---
-Importation des données:
+Préparation des données :
 ```{r}
 "N" <- 21
 "r" <- c(10, 23, 23, 26, 17, 5, 53, 55, 32, 46, 10, 8, 10, 8, 23, 0, 3, 22, 15, 32, 3)
@@ -13,7 +13,7 @@ Importation des données:
 "x2" <- c(0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1)
 ```
 
-Chargement des données:
+Initialisation :
 ```{r}
 init_alpha0 <- 0
 init_alpha1 <- 0
@@ -23,12 +23,13 @@ init_sigma <- 1/10
 init_b <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 ```
 
+Importation des packages:
 ```{r}
 library(boot)
 library(coda)
 ```
 
-Échantillonneur:
+Échantillonneur Hastings-within-Gibbs : 
 ```{r}
 seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, init_sigma, init_b, prop_sd, x1, x2, N)
 {
@@ -52,6 +53,8 @@ seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, i
   chain[1,5] <- init_sigma
   chain_b[1,] <- init_b
   
+  acc_rates <- rep(0,4)
+  
   for (i in 1:nchain)
   {
     # Mise à jour de alpha0
@@ -66,6 +69,7 @@ seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, i
     if (runif(1) < acc_prob){
       alpha0 <- prop
       p <- prop_p
+      acc_rates[1] <- acc_rates[1]+1
     }
     
     # Mise à jour de alpha1
@@ -80,6 +84,7 @@ seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, i
     if (runif(1) < acc_prob){
       alpha1 <- prop
       p <- prop_p
+      acc_rates[2] <- acc_rates[2]+1
     }
     
     # Mise à jour de alpha2
@@ -94,6 +99,7 @@ seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, i
     if (runif(1) < acc_prob){
       alpha2 <- prop
       p <- prop_p
+      acc_rates[3] <- acc_rates[3]+1
     }
     
     # Mise à jour de alpha12
@@ -108,10 +114,11 @@ seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, i
     if (runif(1) < acc_prob){
       alpha12 <- prop
       p <- prop_p
+      acc_rates[4] <- acc_rates[4]+1
     }
     
     # Mise à jour de sigma
-    sigma <- 1 / rgamma(1, shape = 10^(-3) + N / 2, scale = 10^(-3) + 0.5 * sum(b^2)) #change parameters
+    sigma <- 1 / rgamma(1, shape = 10e-3 + N / 2, scale = 1e-3 + 0.5 * sum(b^2)) #change parameters
     
     # Mise à jour de b
     for (j in 1:N)
@@ -133,21 +140,48 @@ seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, i
     chain[i+1,] <- c(alpha0, alpha1, alpha2, alpha12, sigma)
     chain_b[i+1,] <- b
   }
-  my_list <- list("chain" = chain, "b_chain" = chain_b)
+  my_list <- list("chain" = chain, "b_chain" = chain_b, "acc_rates" = acc_rates)
   return(my_list)
 }
 ```
 
 
 ```{r}
-l <- seeds(1e4, init_alpha0, init_alpha1, init_alpha2, init_alpha12, init_sigma, init_b, prop_sd = rep(0.2,5), x1, x2, N)
+l <- seeds(1e4, init_alpha0, init_alpha1, init_alpha2, init_alpha12, init_sigma, init_b, prop_sd = c(0.2, 0.2, 0.2, 0.3, 0.3), x1, x2, N)
+```
+
+Résultat :
+```{r}
+burnin <- 1:1000
+plot(mcmc(l$chain[-c(burnin, 2890),]))
 ```
 
 ```{r}
-l[1]
+plot(mcmc(l$b_chain[-burnin,][,20]))
+```
+
+
+```{r}
+l$acc_rates/10000
+```
+```{r}
+moy_alpha0 <- mean(l$chain[,1])
+moy_alpha1 <- mean(l$chain[,2])
+moy_alpha2 <- mean(l$chain[,3])
+moy_alpha12 <- mean(l$chain[,4])
+moy_sigma <- mean(sqrt(l$chain[,5]))
 ```
 
 ```{r}
-plot(mcmc(l$chain[,5][-2]))
+sd_alpha0 <- sd(l$chain[,1])
+sd_alpha1 <- sd(l$chain[,2])
+sd_alpha2 <- sd(l$chain[,3])
+sd_alpha12 <- sd(l$chain[,4])
+sd_sigma <- sd(sqrt(l$chain[,5]))
 ```
+
+```{r}
+summary(l$chain)
+```
+
 
