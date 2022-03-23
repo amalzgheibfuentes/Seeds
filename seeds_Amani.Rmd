@@ -3,16 +3,38 @@ title: "seeds-Amani"
 output: html_document
 ---
 
+#Libraries
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(boot)
+#function for table
+html_table <- function(x, page_length = 5) {
+  if (is.null(page_length)) {
+    return(DT::datatable(
+    data = x, 
+    rownames = FALSE, 
+    options = list(
+      dom = 't', 
+      scrollX = TRUE, 
+      pageLength = nrow(x)
+    )
+  ))
+  }
+  DT::datatable(
+    data = x, 
+    rownames = FALSE, 
+    options = list(
+      dom = 'tip', 
+      scrollX = TRUE, 
+      pageLength = page_length
+    )
+  )
+}
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+## Data & Init
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 ```{r cars}
 alpha0 <- 0
@@ -39,13 +61,12 @@ c(0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1,
 1)
 ```
 
-## Including Plots
+## Function : Gibbs's sampling
 
-You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
 
-gibbs_Seeds <- function(nchain , n , r , N , X1, X2 , prop_sd = 1) {
+gibbs_Seeds <- function(nchain , n , r , N , X1, X2 , prop_sd) {
   
   alpha0 <- 0
   alpha1 <- 0
@@ -70,7 +91,7 @@ gibbs_Seeds <- function(nchain , n , r , N , X1, X2 , prop_sd = 1) {
     
     # Mise a jour de alpha0
     
-    prop <- rnorm(1, alpha0, prop_sd)
+    prop <- rnorm(1, alpha0, prop_sd[1])
     
     prop_p <- inv.logit(prop + alpha1 * x1 + alpha2 * x2 + alpha12 * x1 * x2 + b)
     
@@ -87,7 +108,7 @@ gibbs_Seeds <- function(nchain , n , r , N , X1, X2 , prop_sd = 1) {
     
     ## Mise a jour de alpha1
     
-    prop <- rnorm(1, alpha1, prop_sd)
+    prop <- rnorm(1, alpha1, prop_sd[2])
     
     prop_p <- inv.logit(alpha0 + prop * x1 + alpha2 * x2 + alpha12 * x1 * x2 + b)
     
@@ -105,7 +126,7 @@ gibbs_Seeds <- function(nchain , n , r , N , X1, X2 , prop_sd = 1) {
     
         ## Mise a jour de alpha2
     
-    prop <- rnorm(1, alpha2, prop_sd)
+    prop <- rnorm(1, alpha2, prop_sd[3])
     
     prop_p <- inv.logit(alpha0 + alpha1 * x1 + prop * x2 + alpha12 * x1 * x2 + b)
     
@@ -123,7 +144,7 @@ gibbs_Seeds <- function(nchain , n , r , N , X1, X2 , prop_sd = 1) {
     
         ## Mise a jour de alpha12
     
-    prop <- rnorm(1, alpha12, prop_sd)
+    prop <- rnorm(1, alpha12, prop_sd[4])
     
     prop_p <- inv.logit(alpha0 + alpha1 * x1 + alpha2 * x2 + prop * x1 * x2 + b)
     
@@ -143,7 +164,7 @@ gibbs_Seeds <- function(nchain , n , r , N , X1, X2 , prop_sd = 1) {
 
     for (j in 1:N)
     {
-      prop <- rnorm(1, b[j], prop_sd)
+      prop <- rnorm(1, b[j], prop_sd[5])
       prop_p_j <- inv.logit(alpha0 + alpha1 * x1[j] + alpha2 * x2[j] + alpha12 * x1[j] * x2[j] + prop)
       
       top <- - (prop^2 / (2 * sigma2)) + r[j] * log(prop_p_j) + (n[j] - r[j]) * log(1 - prop_p_j)
@@ -160,7 +181,7 @@ gibbs_Seeds <- function(nchain , n , r , N , X1, X2 , prop_sd = 1) {
     }
     
         # Mise à jour de sigma2
-    sigma2 <- 1 / rgamma(1, 10**(-3) + N / 2, 10**(-3) + 0.5 * sum(b^2))
+    sigma2 <- 1 / rgamma(1, 10**(-3) + N / 2, 1/(10**(-3) + 0.5 * sum(b^2)))
     
     ## Mettre a jour ma chaine
     chain[i+1,] <- c(alpha0 , alpha1 , alpha2 , alpha12 , sigma2)
@@ -171,14 +192,42 @@ gibbs_Seeds <- function(nchain , n , r , N , X1, X2 , prop_sd = 1) {
   
 ```
 
+## Evaluating
 ```{r}
-x <- gibbs_Seeds(10000 , n , r , N , x1, x2 , prop_sd = 0.1)
+x <- gibbs_Seeds(10000 , n , r , N , x1, x2 , prop_sd = c(0.1,0.3,0.2,0.4,0.3))
 summary(x)
 ```
 
 ```{r}
-plot(coda::mcmc(x))
+burnin <- 1:1000
+plot(coda::mcmc(x[-burnin,]))
 ```
+
+```{r}
+sd_alpha0<- sd(x[-burnin,1])
+sd_alpha1<- sd(x[-burnin,2])
+sd_alpha2<- sd(x[-burnin,3])
+sd_alpha12<-sd(x[-burnin,4])
+sd_sigma <- sd(sqrt(x[,5]))
+
+mean_alpha0 <- mean(x[-burnin,1])
+mean_alpha1 <- mean(x[-burnin,2])
+mean_alpha2 <- mean(x[-burnin,3])
+mean_alpha12 <- mean(x[-burnin,4])
+mean_sigma <- mean(sqrt(x[-burnin,5]))
+  
+```
+
+```{r}
+Results <- data_frame("parametres" = c("alpah0","alpha1","alpha2","alpha12","sigma"),"mean" = c(mean_alpha0,mean_alpha1,mean_alpha2,mean_alpha12,mean_sigma), "sd" = c(sd_alpha0,sd_alpha1,sd_alpha2,sd_alpha12,sd_sigma))
+```
+
+```{r}
+Results %>%
+  html_table()
+```
+
+
 
 
 
