@@ -4,7 +4,7 @@ author: "Aya AMENSSAG"
 date: "3/16/2022"
 output: html_document
 ---
-Préparation des données :
+# Préparation des données :
 ```{r}
 "N" <- 21
 "r" <- c(10, 23, 23, 26, 17, 5, 53, 55, 32, 46, 10, 8, 10, 8, 23, 0, 3, 22, 15, 32, 3)
@@ -13,7 +13,7 @@ Préparation des données :
 "x2" <- c(0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1)
 ```
 
-Initialisation :
+# Initialisation :
 ```{r}
 init_alpha0 <- 0
 init_alpha1 <- 0
@@ -23,13 +23,13 @@ init_sigma <- 1/10
 init_b <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 ```
 
-Importation des packages:
+# Importation des packages:
 ```{r}
 library(boot)
 library(coda)
 ```
 
-Échantillonneur Hastings-within-Gibbs : 
+# Échantillonneur Hastings-within-Gibbs : 
 ```{r}
 seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, init_sigma, init_b, prop_sd, x1, x2, N)
 {
@@ -147,58 +147,75 @@ seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, i
 
 
 ```{r}
-l <- seeds(1e4, init_alpha0, init_alpha1, init_alpha2, init_alpha12, init_sigma, init_b, prop_sd = c(0.2, 0.2, 0.2, 0.3, 0.3), x1, x2, N)
+l <- seeds(1e4, init_alpha0, init_alpha1, init_alpha2, init_alpha12, init_sigma, init_b, prop_sd = c(0.25, 0.2, 0.2, 0.3, 0.3), x1, x2, N)
 ```
 
-Résultat :
+# Résultat :
+
+## $\alpha_0$
 ```{r}
-burnin <- 1:1000
-plot(mcmc(l$chain[-c(burnin, 2890),]))
+burnin <- 1:1000 # On enlève les 1000 premières itérations (burn-in period)
+plot(l$chain[-c(burnin),][,1], type = "l", main = "",ylab=text)
+plot(density(l$chain[-c(burnin),][,1]), type = "l", main = "densité de alpha0")
+    
 ```
 
+```{r}
+sprintf("Le taux d'acceptation de alpha0 : %s", l$acc_rates[1]/100)
+sprintf("La moyenne empirique de alpha0 : %s", mean(l$chain[,1]))
+sprintf("L'écart-type empirique de alpha0 : %s", sd(l$chain[,1]))
+```
+
+## $\alpha_1$
+```{r}
+plot(l$chain[-c(burnin),][,2], type = "l", main = "",ylab=text)
+plot(density(l$chain[-c(burnin),][,2]), type = "l", main = "densité de alpha1")
+```
+
+```{r}
+sprintf("Le taux d'acceptation de alpha1 : %s", l$acc_rates[2]/100)
+sprintf("La moyenne empirique de alpha1 : %s", mean(l$chain[,2]))
+sprintf("L'écart-type empirique de alpha1 : %s", sd(l$chain[,2]))
+```
+
+## $\alpha_2$
+```{r}
+plot(l$chain[-c(burnin),][,3], type = "l", main = "",ylab=text)
+plot(density(l$chain[-c(burnin),][,3]), type = "l", main = "densité de alpha2")
+```
+
+```{r}
+sprintf("Le taux d'acceptation de alpha2 : %s", l$acc_rates[3]/100)
+sprintf("La moyenne empirique de alpha2 : %s", mean(l$chain[,3]))
+sprintf("L'écart-type empirique de alpha2 : %s", sd(l$chain[,3]))
+```
+
+## $\alpha_{12}$
+```{r}
+plot(l$chain[-c(burnin),][,4], type = "l", main = "",ylab=text)
+plot(density(l$chain[-c(burnin),][,4]), type = "l", main = "densité de alpha12")
+```
+
+```{r}
+sprintf("Le taux d'acceptation de alpha12 : %s", l$acc_rates[4]/100)
+sprintf("La moyenne empirique de alpha12 : %s", mean(l$chain[,4]))
+sprintf("L'écart-type empirique de alpha12 : %s", sd(l$chain[,4]))
+```
+## $\sigma$
+```{r}
+plot(l$chain[-c(burnin),][,5], type = "l", main = "",ylab=text)
+plot(density(l$chain[-c(burnin),][,5]), type = "l", main = "densité de sigma")
+```
+
+```{r}
+sprintf("La moyenne empirique de sigma : %s", mean(l$chain[,5]))
+sprintf("L'écart-type empirique de sigma : %s", sd(l$chain[,5]))
+```
+
+
+## $b$
 ```{r}
 plot(mcmc(l$b_chain[-burnin,][,20]))
-```
-
-
-```{r}
-l$acc_rates/10000
-```
-```{r}
-moy_alpha0 <- mean(l$chain[,1])
-moy_alpha1 <- mean(l$chain[,2])
-moy_alpha2 <- mean(l$chain[,3])
-moy_alpha12 <- mean(l$chain[,4])
-moy_sigma <- mean(sqrt(l$chain[,5]))
-```
-
-```{r}
-moy_alpha0 
-moy_alpha1 
-moy_alpha2 
-moy_alpha12 
-moy_sigma
-```
-
-
-```{r}
-sd_alpha0 <- sd(l$chain[,1])
-sd_alpha1 <- sd(l$chain[,2])
-sd_alpha2 <- sd(l$chain[,3])
-sd_alpha12 <- sd(l$chain[,4])
-sd_sigma <- sd(sqrt(l$chain[,5]))
-```
-
-```{r}
-sd_alpha0 
-sd_alpha1 
-sd_alpha2 
-sd_alpha12 
-sd_sigma 
-```
-
-```{r}
-summary(l$chain)
 ```
 ```{r}
 text=c("alpha0", "alpha1", "alpha2", "alpha12", "sigma")
