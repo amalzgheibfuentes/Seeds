@@ -147,7 +147,7 @@ seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, i
 
 
 ```{r}
-l <- seeds(1e4, init_alpha0, init_alpha1, init_alpha2, init_alpha12, init_sigma, init_b, prop_sd = c(0.25, 0.2, 0.2, 0.3, 0.3), x1, x2, N)
+l <- seeds(1e4, init_alpha0, init_alpha1, init_alpha2, init_alpha12, init_sigma, init_b, prop_sd = c(0.25, 0.65, 0.2, 0.3, 0.3), x1, x2, N)
 ```
 
 # Résultat :
@@ -219,12 +219,11 @@ plot(mcmc(l$b_chain[-burnin,][,20]))
 ```
 ```{r}
 text=c("alpha0", "alpha1", "alpha2", "alpha12", "sigma")
-par(mfrow = c(4, 2), mar = c(4, 5, 0.5, 0.5))
+par(mfrow = c(5, 2), mar = c(4, 5, 0.5, 0.5))
 for (j in 1:5){
   plot(l$chain[-c(burnin, 2890),][,j], type = "l", main = "",ylab=text[j])
   plot(density(l$chain[-c(burnin, 2890),][,j]), type = "l", main = "")
 }
-    
 ```
 
 
