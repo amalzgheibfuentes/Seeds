@@ -1,6 +1,6 @@
 ---
 title: "Seeds"
-author: "Aya AMENSSAG"
+author: "Aya AMENSSAG, Amani LAKEHILI, Amal ZGHEIB, Maria ALONSO"
 date: "3/16/2022"
 output: html_document
 ---
