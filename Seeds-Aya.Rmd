@@ -27,6 +27,7 @@ init_b <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 ```{r}
 library(boot)
 library(coda)
+library(factoextra)
 ```
 
 # Échantillonneur Hastings-within-Gibbs : 
@@ -162,8 +163,10 @@ plot(density(l$chain[-burnin,][,1]), type = "l", main = "densité de alpha0")
 
 ```{r}
 sprintf("Le taux d'acceptation de alpha0 : %s", l$acc_rates[1]/100)
-sprintf("La moyenne empirique de alpha0 : %s", mean(l$chain[,1]))
-sprintf("L'écart-type empirique de alpha0 : %s", sd(l$chain[,1]))
+mean_alpha0 = mean(l$chain[,1])
+sprintf("La moyenne empirique de alpha0 : %s", mean_alpha0)
+sd_alpha0 = sd(l$chain[,1])
+sprintf("L'écart-type empirique de alpha0 : %s", sd_alpha0)
 ```
 
 ## $\alpha_1$
@@ -174,8 +177,10 @@ plot(density(l$chain[-burnin,][,2]), type = "l", main = "densité de alpha1")
 
 ```{r}
 sprintf("Le taux d'acceptation de alpha1 : %s", l$acc_rates[2]/100)
-sprintf("La moyenne empirique de alpha1 : %s", mean(l$chain[,2]))
-sprintf("L'écart-type empirique de alpha1 : %s", sd(l$chain[,2]))
+mean_alpha1 = mean(l$chain[,2])
+sprintf("La moyenne empirique de alpha1 : %s", mean_alpha1)
+sd_alpha1 = sd(l$chain[,2])
+sprintf("L'écart-type empirique de alpha1 : %s", sd_alpha1)
 ```
 
 ## $\alpha_2$
@@ -186,8 +191,10 @@ plot(density(l$chain[-burnin,][,3]), type = "l", main = "densité de alpha2")
 
 ```{r}
 sprintf("Le taux d'acceptation de alpha2 : %s", l$acc_rates[3]/100)
-sprintf("La moyenne empirique de alpha2 : %s", mean(l$chain[,3]))
-sprintf("L'écart-type empirique de alpha2 : %s", sd(l$chain[,3]))
+mean_alpha2 = mean(l$chain[,3])
+sprintf("La moyenne empirique de alpha2 : %s", mean_alpha2)
+sd_alpha2 = sd(l$chain[,3])
+sprintf("L'écart-type empirique de alpha2 : %s", sd_alpha2)
 ```
 
 ## $\alpha_{12}$
@@ -198,8 +205,10 @@ plot(density(l$chain[-burnin,][,4]), type = "l", main = "densité de alpha12")
 
 ```{r}
 sprintf("Le taux d'acceptation de alpha12 : %s", l$acc_rates[4]/100)
-sprintf("La moyenne empirique de alpha12 : %s", mean(l$chain[,4]))
-sprintf("L'écart-type empirique de alpha12 : %s", sd(l$chain[,4]))
+mean_alpha12 = mean(l$chain[,4])
+sprintf("La moyenne empirique de alpha12 : %s", mean_alpha12)
+sd_alpha12 = sd(l$chain[,4])
+sprintf("L'écart-type empirique de alpha12 : %s", sd_alpha12)
 ```
 ## $\sigma$
 ```{r}
@@ -208,8 +217,10 @@ plot(density(l$chain[-burnin,][,5]), type = "l", main = "densité de sigma")
 ```
 
 ```{r}
-sprintf("La moyenne empirique de sigma : %s", mean(sqrt(l$chain[,5])))
-sprintf("L'écart-type empirique de sigma : %s", sd(sqrt(l$chain[,5])))
+mean_sigma = mean(sqrt(l$chain[,5]))
+sprintf("La moyenne empirique de sigma : %s", mean_sigma)
+sd_sigma = sd(sqrt(l$chain[,5]))
+sprintf("L'écart-type empirique de sigma : %s", sd_sigma)
 ```
 Les moyennes et les écarts-types que nous obtenons sont relativement proches  de ceux proposés par l’énoncé.
 
@@ -237,3 +248,58 @@ for (j in 1:4){
 Les chaînes de $b$ se comportent normalement.
 
 # Inteprétation
+
+En utilisant les moyennes obtenues précédemment, on essaie de visualiser l'impact de $x_1$ et $x_2$ sur $\operatorname{logit}(p)$:
+```{r}
+mean_b = c(mean(l$b_chain[,1]))
+for (i in 2:21){
+  mean_b <- append(mean_b, mean(l$b_chain[,i]))
+}
+logitp = mean_alpha0 + mean_alpha1 * x1 + mean_alpha2 * x2 + mean_alpha12 * x1 * x2 + mean_b
+plot(logitp)
+```
+
+Après avoir tracé $\operatorname{logit}(p)$ en fonction de l'indice, on constate qu'il y a des clusters qu'on va essayer de visualiser plus clairement en effectuant un k_means clustering:
+
+```{r}
+index <- 1:21
+df <- data.frame(index, logitp)
+res_kmeans <- kmeans(df, centers = 4 , nstart = 1000)
+fviz_cluster(res_kmeans, data = df)
+```
+
+```{r}
+c1 = which(res_kmeans$cluster==1)
+c2 = which(res_kmeans$cluster==2)
+c3 = which(res_kmeans$cluster==3)
+c4 = which(res_kmeans$cluster==4)
+```
+
+```{r}
+x <- x1*x2
+x[c1]
+x[c2]
+x[c3]
+x[c4]
+```
+
+```{r}
+x1[c1]
+x1[c2]
+x1[c3]
+x1[c4]
+```
+
+```{r}
+x2[c1]
+x2[c2]
+x2[c3]
+x2[c4]
+```
+
+Le 1er cluster correpond à $x_1 = 0$ et $x_2 = 1$, i.e. aegyptiao 75 & cucumber
+Le 2e cluster correpond à $x_1 = 1$ et $x_2 = 0$, i.e. aegyptiao 73 & bean
+Le 3e cluster correpond à $x_1 = 0$ et $x_2 = 0$, i.e. aegyptiao 75 & bean
+Le 4e cluster correpond à $x_1 = 1$ et $x_2 = 1$, i.e. aegyptiao 73 & cucumber
+
+Cela signifie qu'une graine *cucumber* a plus de chances de germer lorsque le type de graine est *aegyptiao 75*, alors qu'une graine *bean*  a plus de chances de germer lorsque le type de graine est *aegyptiao 73*, mais ce n'est pas drastique comparé à une graine *cucumber*.
