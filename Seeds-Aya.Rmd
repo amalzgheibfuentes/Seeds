@@ -259,7 +259,7 @@ logitp = mean_alpha0 + mean_alpha1 * x1 + mean_alpha2 * x2 + mean_alpha12 * x1 *
 plot(logitp)
 ```
 
-Après avoir tracé $\operatorname{logit}(p)$ en fonction de l'indice, on constate qu'il y a des clusters qu'on va essayer de visualiser plus clairement en effectuant un k_means clustering:
+Après avoir tracé $\operatorname{logit}(p)$ en fonction de l'indice, on constate qu'il y a des clusters qu'on va essayer de visualiser plus clairement en effectuant un k-means clustering:
 
 ```{r}
 index <- 1:21
@@ -302,4 +302,5 @@ Le 2e cluster correpond à $x_1 = 1$ et $x_2 = 0$, i.e. aegyptiao 73 & bean
 Le 3e cluster correpond à $x_1 = 0$ et $x_2 = 0$, i.e. aegyptiao 75 & bean
 Le 4e cluster correpond à $x_1 = 1$ et $x_2 = 1$, i.e. aegyptiao 73 & cucumber
 
-Cela signifie qu'une graine *cucumber* a plus de chances de germer lorsque le type de graine est *aegyptiao 75*, alors qu'une graine *bean*  a plus de chances de germer lorsque le type de graine est *aegyptiao 73*, mais ce n'est pas drastique comparé à une graine *cucumber*.
+Cela signifie qu'une graine *cucumber* a beaucoup plus de chances de germer lorsque le type de graine est *aegyptiao 75*, alors qu'une graine *bean*  a légèrement plus de chances de germer lorsque le type de graine est *aegyptiao 73*, mais ce n'est pas drastique comparé à une graine *cucumber*.
+
