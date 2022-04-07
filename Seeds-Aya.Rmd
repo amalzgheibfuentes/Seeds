@@ -147,16 +147,16 @@ seeds <- function(nchain, init_alpha0, init_alpha1, init_alpha2, init_alpha12, i
 
 
 ```{r}
-l <- seeds(1e4, init_alpha0, init_alpha1, init_alpha2, init_alpha12, init_sigma, init_b, prop_sd = c(0.25, 0.65, 0.2, 0.3, 0.3), x1, x2, N)
+l <- seeds(1e4, init_alpha0, init_alpha1, init_alpha2, init_alpha12, init_sigma, init_b, prop_sd = c(0.25, 0.5, 0.3, 0.5, 0.3), x1, x2, N)
 ```
 
 # Résultat :
 
 ## $\alpha_0$
 ```{r}
-burnin <- 1:1000 # On enlève les 1000 premières itérations (burn-in period)
-plot(l$chain[-c(burnin),][,1], type = "l", main = "",ylab=text)
-plot(density(l$chain[-c(burnin),][,1]), type = "l", main = "densité de alpha0")
+burnin <- (1:1000)
+plot(l$chain[-burnin,][,1], type = "l", main = "")
+plot(density(l$chain[-burnin,][,1]), type = "l", main = "densité de alpha0")
     
 ```
 
@@ -168,8 +168,8 @@ sprintf("L'écart-type empirique de alpha0 : %s", sd(l$chain[,1]))
 
 ## $\alpha_1$
 ```{r}
-plot(l$chain[-c(burnin),][,2], type = "l", main = "",ylab=text)
-plot(density(l$chain[-c(burnin),][,2]), type = "l", main = "densité de alpha1")
+plot(l$chain[-burnin,][,2], type = "l", main = "")
+plot(density(l$chain[-burnin,][,2]), type = "l", main = "densité de alpha1")
 ```
 
 ```{r}
@@ -180,8 +180,8 @@ sprintf("L'écart-type empirique de alpha1 : %s", sd(l$chain[,2]))
 
 ## $\alpha_2$
 ```{r}
-plot(l$chain[-c(burnin),][,3], type = "l", main = "",ylab=text)
-plot(density(l$chain[-c(burnin),][,3]), type = "l", main = "densité de alpha2")
+plot(l$chain[-burnin,][,3], type = "l", main = "")
+plot(density(l$chain[-burnin,][,3]), type = "l", main = "densité de alpha2")
 ```
 
 ```{r}
@@ -192,8 +192,8 @@ sprintf("L'écart-type empirique de alpha2 : %s", sd(l$chain[,3]))
 
 ## $\alpha_{12}$
 ```{r}
-plot(l$chain[-c(burnin),][,4], type = "l", main = "",ylab=text)
-plot(density(l$chain[-c(burnin),][,4]), type = "l", main = "densité de alpha12")
+plot(l$chain[-burnin,][,4], type = "l", main = "")
+plot(density(l$chain[-burnin,][,4]), type = "l", main = "densité de alpha12")
 ```
 
 ```{r}
@@ -203,27 +203,37 @@ sprintf("L'écart-type empirique de alpha12 : %s", sd(l$chain[,4]))
 ```
 ## $\sigma$
 ```{r}
-plot(l$chain[-c(burnin),][,5], type = "l", main = "",ylab=text)
-plot(density(l$chain[-c(burnin),][,5]), type = "l", main = "densité de sigma")
+plot(l$chain[-burnin,][,5], type = "l", main = "")
+plot(density(l$chain[-burnin,][,5]), type = "l", main = "densité de sigma")
 ```
 
 ```{r}
-sprintf("La moyenne empirique de sigma : %s", mean(l$chain[,5]))
-sprintf("L'écart-type empirique de sigma : %s", sd(l$chain[,5]))
+sprintf("La moyenne empirique de sigma : %s", mean(sqrt(l$chain[,5])))
+sprintf("L'écart-type empirique de sigma : %s", sd(sqrt(l$chain[,5])))
 ```
+Les moyennes et les écarts-types que nous obtenons sont relativement proches  de ceux proposés par l’énoncé.
 
-
-## $b$
-```{r}
-plot(mcmc(l$b_chain[-burnin,][,20]))
-```
+# Tous les résultats dans un graphe
 ```{r}
 text=c("alpha0", "alpha1", "alpha2", "alpha12", "sigma")
-par(mfrow = c(5, 2), mar = c(4, 5, 0.5, 0.5))
+par(mfrow = c(5, 2), mar = c(1, 6, 1, 6))
 for (j in 1:5){
-  plot(l$chain[-c(burnin, 2890),][,j], type = "l", main = "",ylab=text[j])
-  plot(density(l$chain[-c(burnin, 2890),][,j]), type = "l", main = "")
+  plot(l$chain[-burnin,][,j], type = "l", main = "",ylab=text[j])
+  plot(density(l$chain[-burnin,][,j]), type = "l", main = "")
 }
 ```
 
+## Quelques valeurs de $b$
+```{r}
+text=c("b1", "b5", "b10", "b15")
+val = c(1,5,10,15)
+par(mfrow = c(4, 2), mar = c(1, 6, 1, 6))
+for (j in 1:4){
+  plot(l$b_chain[-burnin,][,val[j]], type = "l", main = "",ylab=text[j])
+  plot(density(l$b_chain[-burnin,][,val[j]]), type = "l", main = "")
+}
+```
 
+Les chaînes de $b$ se comportent normalement.
+
+# Inteprétation
