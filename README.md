@@ -1,7 +1,7 @@
 # Seeds: Random effect logistic regression
 ## BAYES - Advanced Bayesian Inference
 
-Subject: https://www.mrc-bsu.cam.ac.uk/wp-content/uploads/WinBUGS_Vol1.pdf.
+Subject: https://www.mrc-bsu.cam.ac.uk/wp-content/uploads/WinBUGS_Vol1.pdf page 9
 
 Link to the code: https://github.com/amalzgheibfuentes/Seeds/blob/6f05fc1c837a6bc9ba03c8c95e5ac75e22ced921/Seeds-Code.Rmd
 
